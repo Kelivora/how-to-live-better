@@ -429,6 +429,8 @@ function openSec(n,start,mode){
   show(d,at,mode);
 }
 function openList(kind,idxs,title){show(mkDeck(kind,idxs,{h:null,title}),0,'push');}
+/* 嵌在别的页面里（iframe）时 history 可能被拒绝，失败就只是不改地址栏 */
+function hist(m,st,url){try{history[m](st,'',url);}catch(e){}}
 function hashOf(){
   if(!deck) return '';
   if(deck.kind!=='sec') return '#'+deck.kind;
@@ -447,8 +449,8 @@ function show(d,at,mode){
   }
   layout(was?'jump':'open');
   chrome(); save();
-  if(mode==='push') history.pushState({deck:1},'',hashOf());
-  else if(mode==='replace') history.replaceState({deck:1},'',hashOf());
+  if(mode==='push') hist('pushState',{deck:1},hashOf());
+  else if(mode==='replace') hist('replaceState',{deck:1},hashOf());
 }
 function closeDeck(){
   if(!deck) return;
@@ -461,7 +463,7 @@ function closeDeck(){
 }
 function back(){
   if(history.state&&history.state.deck) history.back();
-  else{closeDeck();history.replaceState(null,'',location.pathname+location.search);}
+  else{closeDeck();hist('replaceState',null,location.pathname+location.search);}
 }
 function save(){
   if(!deck||deck.kind!=='sec') return;
@@ -508,14 +510,14 @@ function go(d){
   const j=deck.i+d;
   if(j<0||j>=deck.list.length){bump(d);return;}
   deck.i=j; layout(false); chrome(); save();
-  if(deck.kind==='sec') history.replaceState(history.state,'',hashOf());
+  if(deck.kind==='sec') hist('replaceState',history.state,hashOf());
 }
 function jump(k){
   if(!deck||k===deck.i) return;
   if(Math.abs(k-deck.i)===1) return go(k-deck.i);
   deck.i=k; stage.textContent=''; live.clear();
   layout('jump'); chrome(); save();
-  if(deck.kind==='sec') history.replaceState(history.state,'',hashOf());
+  if(deck.kind==='sec') hist('replaceState',history.state,hashOf());
 }
 function bump(d){
   const el=live.get(deck.i); if(!el) return;
@@ -787,7 +789,7 @@ refreshHome(); refreshProg();
 deckEl.inert=true; sheet.inert=true;
 /* 旧版页面的 #s1-3 / #sec1 链接照样能直接打开对应卡片；返回键回到目录而不是离开页面 */
 const r0=route();
-if(r0){history.replaceState(null,'',location.pathname+location.search);openSec(r0.n,r0.no,'push');}
-else if(location.hash) history.replaceState(null,'',location.pathname+location.search);
+if(r0){hist('replaceState',null,location.pathname+location.search);openSec(r0.n,r0.no,'push');}
+else if(location.hash) hist('replaceState',null,location.pathname+location.search);
 })();
 </script></body></html>
